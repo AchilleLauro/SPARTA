@@ -12,13 +12,14 @@ For a detailed documentation and step-by-step tutorial to run this version local
 If you liked our approach, are using it as a building block of your tool or are considering it for your related work, feel free and welcome to cite our manuscript!
 Please find the BibTeX below for convenience:
 ```
-@misc{marangone2025teebasedapproachsecurityprivacy,
-      title={A {TEE}-based Approach for Security and Privacy in Decision Support}, 
+@misc{marangone2026secureconfidentialverifiabledecision,
+      title={A Secure, Confidential, and Verifiable Decision Support System}, 
       author={Edoardo Marangone and Eugenio Nerio Nemmi and Daniele Friolo and Giuseppe Ateniese and Ingo Weber and Claudio Di Ciccio},
-      year={2025},
+      year={2026},
       eprint={2509.02413},
       archivePrefix={arXiv},
       primaryClass={cs.CR},
-      url={https://arxiv.org/abs/2509.02413}, 
+      url={https://arxiv.org/abs/2509.02413},
+      note={Accepted for publication at ESORICS 2026}
 }
 ```
