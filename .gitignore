@@ -1,0 +1,30 @@
+# Local launcher tools, chain state, account keys and process bookkeeping.
+/.sparta/
+/tests/__pycache__/
+
+# Local sealed seeds for both CCUs.
+/src/tee/seed/
+/src/teeserver/seed/
+
+# Certificates, certificate requests, revocation lists, keys and keystores.
+*.pem
+*.crt
+*.cer
+*.cert
+*.der
+*.csr
+*.crl
+*.key
+*.p7b
+*.p7c
+*.p7s
+*.p12
+*.pfx
+*.p8
+*.pkcs8
+*.jks
+*.jceks
+*.keystore
+*.truststore
+
+/src/inputfiles/test
