@@ -144,13 +144,18 @@ func setFunctionHandler(signerArg, middlewareAddr, expectedMeasurement, certific
 		fmt.Println("Error reading input file:", err)
 		return
 	}
+	fmt.Printf("[Write] Input before encryption: %d bytes\n", len(inputData))
 
 	// Encrypt the input file using AES-GCM
+	//PADDING HERE
 	encryptedData, err := clientEncryption.EncryptWithAESGCM(symmetricKey[:], inputData)
 	if err != nil {
 		fmt.Println("Error encrypting input file:", err)
 		return
 	}
+	fmt.Printf("[Write] Encrypted input before Base64 (including nonce and tag): %d bytes\n", len(encryptedData))
+	encryptedDataBase64 := base64.StdEncoding.EncodeToString(encryptedData)
+	fmt.Printf("[Write] Encrypted input after Base64: %d bytes\n", len(encryptedDataBase64))
 
 	// Read the certificate file content (CA-issued certificate)
 	certContent, err := os.ReadFile(certificateFile)
@@ -167,7 +172,7 @@ func setFunctionHandler(signerArg, middlewareAddr, expectedMeasurement, certific
 		"signature":         base64.StdEncoding.EncodeToString(signatureBytes),       // Signature of clientPublicKey
 		"file_extension":    filepath.Ext(inputFile),                                 // File extension
 		"certificate":       string(certContent),                                     // CA-issued certificate
-		"encrypted_data":    base64.StdEncoding.EncodeToString(encryptedData),        // Encrypted input
+		"encrypted_data":    encryptedDataBase64,                                     // Encrypted input
 	}
 
 	// Serialize the payload to JSON
@@ -209,7 +214,7 @@ func setFunctionHandler(signerArg, middlewareAddr, expectedMeasurement, certific
 			return
 		}
 	}
-	fmt.Printf("Payload size sent: %d bytes\n", len(payloadBytes))
+	fmt.Printf("[Write] JSON payload sent: %d bytes (+%d-byte length prefix)\n", len(payloadBytes), len(lengthPrefix))
 
 	// Receive acknowledgment from the middleware
 	buffer := make([]byte, 1024)
@@ -442,7 +447,7 @@ func decisionFunctionHandler(signerArg, middlewareAddr, expectedMeasurement, cer
 			return
 		}
 	}
-	fmt.Printf("Payload size sent: %d bytes\n", len(payloadBytes))
+	fmt.Printf("[Decision] JSON payload sent (not encrypted): %d bytes (+%d-byte length prefix)\n", len(payloadBytes), len(lengthPrefix))
 
 	// Receive acknowledgment from the middleware
 	buffer := make([]byte, 1024)

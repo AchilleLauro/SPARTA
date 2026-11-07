@@ -5,12 +5,13 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	seedGeneration "sparta/src/utils/seedGenerator"
+	"strconv"
 
 	"github.com/edgelesssys/ego/enclave"
 	"golang.org/x/crypto/hkdf"
@@ -177,30 +178,35 @@ func decryptAESGCM(ciphertext, key []byte) ([]byte, error) {
 }
 
 func DecryptWithAESGCMClientInput(key, ciphertext []byte) ([]byte, error) {
-	// Extract nonce from the ciphertext
-	nonceSize := 12 // Standard nonce size for AES-GCM
+	nonceSize := 12
 	if len(ciphertext) < nonceSize {
 		return nil, fmt.Errorf("ciphertext too short")
 	}
-	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
 
-	// Create a new AES cipher block
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
 	}
 
-	// Create GCM mode
 	aesGCM, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GCM mode: %w", err)
 	}
 
-	// Decrypt the ciphertext
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
 	plaintext, err := aesGCM.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt data: %w", err)
 	}
 
-	return plaintext, nil
+	const payloadHeaderSize = 4
+	if len(plaintext) < payloadHeaderSize {
+		return nil, fmt.Errorf("decrypted client input is too short")
+	}
+
+	plaintextSize := binary.BigEndian.Uint32(plaintext[:payloadHeaderSize])
+	if uint64(plaintextSize) > uint64(len(plaintext)-payloadHeaderSize) {
+		return nil, fmt.Errorf("invalid padded client input length")
+	}
+	return plaintext[payloadHeaderSize : payloadHeaderSize+int(plaintextSize)], nil
 }

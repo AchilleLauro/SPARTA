@@ -4,32 +4,43 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/binary"
 	"fmt"
+	"io"
+)
+
+const (
+	targetCiphertextSize = 2000
+	payloadHeaderSize    = 4
 )
 
 // EncryptWithAESGCM encrypts the plaintext using AES-GCM with the provided symmetric key
 func EncryptWithAESGCM(key, plaintext []byte) ([]byte, error) {
-	// Create a new AES cipher block
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
 	}
 
-	// Create GCM mode
 	aesGCM, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GCM mode: %w", err)
 	}
 
-	// Generate nonce
+	paddedPlaintextSize := targetCiphertextSize - aesGCM.NonceSize() - aesGCM.Overhead()
+	maxPlaintextSize := paddedPlaintextSize - payloadHeaderSize
+	if len(plaintext) > maxPlaintextSize {
+		return nil, fmt.Errorf("plaintext is too large: maximum size is %d bytes", maxPlaintextSize)
+	}
+	paddedPlaintext := make([]byte, paddedPlaintextSize)
+	binary.BigEndian.PutUint32(paddedPlaintext[:payloadHeaderSize], uint32(len(plaintext)))
+	copy(paddedPlaintext[payloadHeaderSize:], plaintext)
+
 	nonce := make([]byte, aesGCM.NonceSize())
-	if _, err := rand.Read(nonce); err != nil {
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, fmt.Errorf("failed to generate nonce: %w", err)
 	}
 
-	// Encrypt data
-	ciphertext := aesGCM.Seal(nil, nonce, plaintext, nil)
+	ciphertext := aesGCM.Seal(nil, nonce, paddedPlaintext, nil)
 
-	// Return nonce + ciphertext
 	return append(nonce, ciphertext...), nil
 }
